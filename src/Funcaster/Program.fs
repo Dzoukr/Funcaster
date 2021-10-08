@@ -5,9 +5,8 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Hosting
 open Microsoft.Azure.Functions.Worker.Configuration
 
-let host =
-    HostBuilder()
-        .ConfigureFunctionsWorkerDefaults()
-        .Build()
-
-host.Run()
+[<EntryPoint>]
+HostBuilder()
+    .ConfigureFunctionsWorkerDefaults()
+    .Build()
+    .Run()

@@ -11,8 +11,7 @@ open Microsoft.Extensions.Logging
 type Functions() =
 
     [<Function("RSSFeed")>]
-    member _.RSSFeed
-        ([<HttpTrigger(AuthorizationLevel.Function, "get", Route = "myTest")>] req: HttpRequestData, executionContext: FunctionContext) =
+    member _.RSSFeed ([<HttpTrigger(AuthorizationLevel.Function, "get", Route = "rss")>] req: HttpRequestData, ctx: FunctionContext) =
         let res = req.CreateResponse(HttpStatusCode.OK)
         res.Headers.Add("Content-Type", "text/plain; charset=utf-8");
 
