@@ -6,10 +6,6 @@
         <_FunctionsSkipCleanOutput>true</_FunctionsSkipCleanOutput>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Include="Functions.fs"/>
-        <Compile Include="Program.fs"/>
-    </ItemGroup>
-    <ItemGroup>
         <None Include="host.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
@@ -17,6 +13,13 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>Never</CopyToPublishDirectory>
         </None>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="Xml.fs" />
+        <Compile Include="Domain.fs" />
+        <Compile Include="RssXml.fs" />
+        <Compile Include="Functions.fs" />
+        <Compile Include="Program.fs" />
     </ItemGroup>
     <Target Name="RunFunctions">
         <Exec Command="func start" />
