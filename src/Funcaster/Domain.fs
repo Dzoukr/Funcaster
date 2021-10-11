@@ -10,7 +10,7 @@ type Episode = {
 type Enclosure = {
     Url : Uri
     Type : string
-    Lenght : int
+    Length : int64
 }
 
 type EpisodeType =
@@ -23,7 +23,14 @@ module EpisodeType =
         | Full -> "full"
         | Trailer -> "trailer"
         | Bonus -> "bonus"
-
+    
+    let create (v:string) =
+        match v.ToUpper() with
+        | "FULL" -> Full
+        | "TRAILER" -> Trailer
+        | "BONUS" -> Bonus
+        | x -> failwith $"Unrecognized value for EpisodeType {x}"
+    
 type Item = {
     Guid : string
     Episode : Episode option
@@ -45,6 +52,17 @@ type Owner = {
 }
 
 type ChannelType = Episodic | Serial
+
+module ChannelType =
+    let value = function
+        | Episodic -> "episodic"
+        | Serial -> "serial"
+    
+    let create (v:string) =
+        match v.ToUpper() with
+        | "EPISODIC" -> Episodic
+        | "SERIAL" -> Serial
+        | x -> failwith $"Unrecognized value for ChannelType {x}"
 
 type Channel = {
     Title : string

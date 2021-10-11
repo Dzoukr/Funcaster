@@ -18,6 +18,7 @@
         <Compile Include="Xml.fs" />
         <Compile Include="Domain.fs" />
         <Compile Include="RssXml.fs" />
+        <Compile Include="RssYaml.fs" />
         <Compile Include="Functions.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>

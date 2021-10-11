@@ -1,4 +1,7 @@
 FSharp.Core
 Microsoft.Azure.Functions.Worker.Extensions.Http
+Microsoft.Azure.Functions.Worker.Extensions.Storage
 Microsoft.Azure.Functions.Worker.Sdk
 Microsoft.Azure.Functions.Worker
+YamlDotNet
+Azure.Storage.Blobs
