@@ -38,16 +38,16 @@ type YamlOwner() =
         }
 
 type YamlChannel() =
-    member val Title = "" with get, set
-    member val Link = "" with get, set
-    member val Description = "" with get, set
-    member val Language = "" with get, set
-    member val Author = "" with get, set
+    member val Title : string = "" with get, set
+    member val Link : string = "" with get, set
+    member val Description : string = "" with get, set
+    member val Language : string = null with get, set
+    member val Author : string = "" with get, set
     member val Owner : YamlOwner = YamlOwner() with get, set
     member val Explicit = false with get, set
-    member val Image = "" with get, set
-    member val Category = "" with get, set
-    member val Type = "" with get, set
+    member val Image : string = "" with get, set
+    member val Category : string = null with get, set
+    member val Type : string = "" with get, set
     member val Restrictions : string [] = null with get, set
     
     static member OfChannel (ch:Channel) =
@@ -126,7 +126,7 @@ type YamlItem() =
     member val Restrictions : string [] = null with get, set
     member val Duration = "" with get, set
     member val Explicit = false with get, set
-    member val Image = "" with get, set
+    member val Image = null with get, set
     member val Keywords : string [] = null with get, set
     member val EpisodeType = "" with get, set
     
@@ -161,21 +161,6 @@ type YamlItem() =
             Keywords = y.Keywords |> fromNullableToList
             EpisodeType = y.EpisodeType |> EpisodeType.create
         }
-
-type YamlIndex() =
-    member val Channel = YamlChannel() with get, set
-    member val Items : YamlItem [] = [||] with get, set
-    
-    static member ofData (channel:Channel) (items:Item list) =
-        let y = YamlIndex()
-        y.Channel <- channel |> YamlChannel.OfChannel
-        y.Items <- items |> List.map YamlItem.OfItem |> List.toArray
-        y
-    
-    static member toData (y:YamlIndex) =
-        let channel = y.Channel |> YamlChannel.ToChannel
-        let items = y.Items |> Array.map YamlItem.ToItem |> Array.toList
-        channel, items
 
 let serializer =
     SerializerBuilder()

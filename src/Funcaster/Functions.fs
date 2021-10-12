@@ -1,24 +1,25 @@
 namespace Funcaster.Functions
 
 open System
-open System.Collections.Generic
 open System.IO
 open System.Net
 open System.Text.Json
-open System.Threading.Tasks
-open System.Xml
 open Azure.Storage.Blobs
-open Funcaster.RssXml
-open Funcaster
 open Funcaster.Domain
+open Funcaster.RssXml
+open Funcaster.RssYaml
 open Microsoft.Azure.Functions.Worker
 open Microsoft.Azure.Functions.Worker.Http
 open Microsoft.Extensions.Logging
 
+module Paths =
+    let [<Literal>] Root = "podcast/"
+    let [<Literal>] Episodes = "episodes/"
+    let [<Literal>] Index = "_index.yaml"
+    let [<Literal>] Metadata = "podcast.yaml"
 
-type Functions(log:ILogger<Functions>, blobClient:BlobServiceClient) =
-    
-    let getDefaultItem guid url length contentType : Item =
+module Stubs =
+    let getItemStub guid url length contentType : Item =
         {
             Guid = guid
             Episode = None
@@ -34,69 +35,92 @@ type Functions(log:ILogger<Functions>, blobClient:BlobServiceClient) =
             EpisodeType = EpisodeType.Full
         }
     
-//    let getBlobContainerClient (path:string) =
-//        let containers = path.Split([| '\\'; '/' |])
-//        for c in containers do
-//            
+    let getChannelStub : Channel =
+        {
+            Title = "Fill me!"
+            Link = Uri("https://example.com")
+            Description = "Fill me!"
+            Language = Some "You can fill me or delete!"
+            Author = "Fill me!"
+            Owner = { Name = "Fill me!"; Email = "Fill me!" }
+            Explicit = false
+            Image = Uri("https://example.com")
+            Category = Some "You can fill me or delete!"
+            Type = ChannelType.Episodic
+            Restrictions = []
+        }
+
+module Helpers =
+    let downloadDeserialized<'a> (bc:BlobClient) =
+        bc.
+            DownloadContent()
+            .Value
+            .Content
+            .ToString()
+        |> deserializer.Deserialize<'a>
     
-    [<Function("PodcastUploaded")>]
-    member _.PodcastUploaded ([<BlobTrigger("podcast/episodes/{name}", Connection = "PodcastStorage")>] ctx: FunctionContext) =
+    let uploadSerialized (bc:BlobClient) (i:_) =
+        i
+        |> serializer.Serialize
+        |> BinaryData.FromString
+        |> (fun x -> bc.Upload(x, true))
+        |> ignore
+
+type Functions(log:ILogger<Functions>, blobClient:BlobServiceClient) =
+    
+    [<Function("PodcastFileChanged")>]
+    member _.PodcastFileChanged ([<BlobTrigger(Paths.Root + Paths.Episodes + "{name}", Connection = "PodcastStorage")>] ctx: FunctionContext) =
         let data = ctx.BindingContext.BindingData
         let uri = data.["Uri"].ToString().Trim('\"')
         let ext = uri |> Path.GetExtension
+        let originalFilename = Paths.Episodes + data.["Name"].ToString()
         
-        let relativePath = data.["BlobTrigger"] |> string
-        let filename = Path.GetFileName relativePath
-        let container = (Path.GetDirectoryName relativePath).Replace("\\","/")
-                
-        let metadata = data.["Properties"] |> string |> JsonSerializer.Deserialize<{| Length : int64; ContentType : string |}>
+        let client = blobClient.GetBlobContainerClient(Paths.Root)
+        
+        // create yaml file stub
         if ext <> ".yaml" then
-            log.LogInformation $"Uri = {uri}; Ext = {ext}; Name = {filename}"
-            let item = getDefaultItem uri (Uri uri) metadata.Length metadata.ContentType
-            let client = blobClient.GetBlobContainerClient(container)
-            let bc = client.GetBlobClient("test.yaml")
-            bc.Upload(new MemoryStream())
-            ()
+            let metadata = data.["Properties"] |> string |> JsonSerializer.Deserialize<{| Length : int64; ContentType : string |}>
+            let filename = Path.ChangeExtension(originalFilename, ".yaml")
+            log.LogInformation("Creating Yaml for newly added file {filename}", filename)
+            let bc = client.GetBlobClient(filename)
+            
+            Stubs.getItemStub uri (Uri uri) metadata.Length metadata.ContentType
+            |> YamlItem.OfItem
+            |> Helpers.uploadSerialized bc
+        // index yaml file
+        else
+            let newlyAddedItem = client.GetBlobClient(originalFilename) |> Helpers.downloadDeserialized<YamlItem>
+            
+            log.LogInformation("Reindexing episodes index file")
+            let index = client.GetBlobClient(Paths.Index)
+            if index.Exists().Value then
+                let c = index.DownloadContent().Value
+                let yamlItems = c.Content.ToString() |> deserializer.Deserialize<YamlItem []>
+                
+                // put the latest on the top
+                yamlItems
+                |> Array.filter (fun x -> x.Guid <> newlyAddedItem.Guid)
+                |> Array.append [| newlyAddedItem |]
+                |> Array.sortByDescending (fun x -> DateTimeOffset.Parse(x.Publish))
+                |> Array.distinctBy (fun x -> x.Guid)
+                |> Helpers.uploadSerialized index
+            else
+                newlyAddedItem |> Array.singleton |> Helpers.uploadSerialized index
+        
+        // ensure channel info always available
+        let metadata = client.GetBlobClient(Paths.Metadata) 
+        if metadata.Exists().Value |> not then
+            Stubs.getChannelStub
+            |> YamlChannel.OfChannel
+            |> Helpers.uploadSerialized metadata
         ()
 
     [<Function("RssFeed")>]
     member _.RssFeed ([<HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "rss")>] req: HttpRequestData, ctx: FunctionContext) =
-        
-        let channel : Channel = {
-            Title = "MyTitle"
-            Link = Uri("http://example.com")
-            Description = "todo"
-            Language = Some "cs"
-            Author = "Roman"
-            Owner = { Name = "Romic"; Email = "neco"}
-            Explicit = false
-            Image = Uri("http://example.com/image")
-            Category = Some "Technology"
-            Type = ChannelType.Episodic
-            Restrictions = ["JSOU"]
-        }
-        
-        let item : Item = {
-            Guid = "todo"
-            Episode = Some { Season = 1; Episode = 1}
-            Enclosure = {
-                Url = Uri("http://example.com")
-                Type = "audio/mpeg"
-                Length = 1231231L }
-            Publish = DateTimeOffset.UtcNow
-            Title = "Super dil"
-            Description = "Mrda jak svina"
-            Restrictions = []
-            Duration = TimeSpan.FromMinutes 25.
-            Explicit = false
-            Image = None
-            Keywords = []
-            EpisodeType = EpisodeType.Full
-        }
-        
+        let client = blobClient.GetBlobContainerClient(Paths.Root)
+        let channel = client.GetBlobClient(Paths.Metadata) |> Helpers.downloadDeserialized<YamlChannel> |> YamlChannel.ToChannel
+        let items = client.GetBlobClient(Paths.Index) |> Helpers.downloadDeserialized<YamlItem []> |> Array.map YamlItem.ToItem |> Array.toList
         let res = req.CreateResponse(HttpStatusCode.OK)
         res.Headers.Add("Content-Type", "application/rss+xml; charset=utf-8");
-        //RssXml.getDoc channel [item] |> RssXml.toString |> res.WriteString
-        
-        //RssYaml.toString channel [item] |> res.WriteString
+        RssXml.getDoc channel items |> RssXml.toString |> res.WriteString
         res
