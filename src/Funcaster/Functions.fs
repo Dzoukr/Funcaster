@@ -119,7 +119,13 @@ type Functions(log:ILogger<Functions>, blobClient:BlobServiceClient) =
     member _.RssFeed ([<HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "rss")>] req: HttpRequestData, ctx: FunctionContext) =
         let client = blobClient.GetBlobContainerClient(Paths.Root)
         let channel = client.GetBlobClient(Paths.Metadata) |> Helpers.downloadDeserialized<YamlChannel> |> YamlChannel.ToChannel
-        let items = client.GetBlobClient(Paths.Index) |> Helpers.downloadDeserialized<YamlItem []> |> Array.map YamlItem.ToItem |> Array.toList
+        let items =
+            client.GetBlobClient(Paths.Index)
+            |> Helpers.downloadDeserialized<YamlItem []>
+            |> Array.map YamlItem.ToItem
+            |> Array.filter (fun x -> x.Publish <= DateTimeOffset.UtcNow)
+            |> Array.toList
+            
         let res = req.CreateResponse(HttpStatusCode.OK)
         res.Headers.Add("Content-Type", "application/rss+xml; charset=utf-8");
         RssXml.getDoc channel items |> RssXml.toString |> res.WriteString
