@@ -6,6 +6,7 @@ open Fake.Core
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.DotNet
+open System.IO.Compression
 
 module Tools =
     let private findTool tool winTool =
@@ -56,6 +57,11 @@ Target.create "Run" (fun _ ->
     Tools.dotnet "watch msbuild /t:RunFunctions" Paths.projectSrc
 )
 
-Target.create "Publish" (fun _ -> publish Paths.projectSrc Paths.projectPublish)
+Target.create "Publish" (fun _ ->
+    publish Paths.projectSrc Paths.projectPublish
+    let zipFile = Paths.projectPublish + ".zip"
+    File.delete zipFile
+    ZipFile.CreateFromDirectory(Paths.projectPublish, zipFile)
+)
 
 Target.runOrDefaultWithArguments "Run"

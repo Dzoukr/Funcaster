@@ -59,34 +59,36 @@ module RssXml =
         |> Xml.appendOpt (item.Restrictions |> tryGetRestrictions) // opt
         |> Xml.append (Xml.createValueNs Namespaces.itunes "duration" (string item.Duration))
         |> Xml.append (Xml.createValueNs Namespaces.itunes "explicit" (item.Explicit.ToString().ToLower())) // opt
-        |> Xml.appendOpt (item.Image |> Option.map (fun i -> Xml.createValueNs Namespaces.itunes "image" (string i))) // opt
+        |> Xml.appendOpt (item.Image |> Option.map (fun i -> Xml.createNs Namespaces.itunes "image" |> Xml.attribute "href" (string i)))
         |> Xml.appendOpt (item.Keywords |> tryGetKeywords) // opt
         |> Xml.append (Xml.createValueNs Namespaces.itunes "episodeType" (item.EpisodeType |> EpisodeType.value)) // opt
 
-    let private getChannel (channel:Channel) =
-        Xml.create "channel"
-        |> Xml.append (Xml.createValue "title" channel.Title)
-        |> Xml.append (Xml.createValue "link" (string channel.Link))
-        |> Xml.append (Xml.createValueXCData "description" channel.Description)
-        |> Xml.appendOpt (channel.Language |> Option.map (fun l -> Xml.createValue "language" l))                         // opt
-        |> Xml.append (Xml.createValueNs Namespaces.itunes "author" channel.Author)
-        |> Xml.append (
-            Xml.createNs Namespaces.itunes "owner"
-            |> Xml.append (Xml.createValueNs Namespaces.itunes "name" channel.Owner.Name)
-            |> Xml.append (Xml.createValueNs Namespaces.itunes "email" channel.Owner.Email)
-        )
-        |> Xml.append (Xml.createValueNs Namespaces.itunes "image" channel.Image)
-        |> Xml.append (Xml.createValueNs Namespaces.itunes "explicit" (channel.Explicit.ToString().ToLower()))  // opt
-        |> Xml.appendOpt (channel.Category |> Option.map (fun x -> Xml.createNs Namespaces.itunes "category" |> Xml.attribute "text" x))          // opt
-        |> Xml.append (Xml.createValueNs Namespaces.itunes "type" "episodic")  // opt
-        |> Xml.appendOpt (channel.Restrictions |> tryGetRestrictions) // opt
+    let private getChannel (channel:Channel) (xs:Item list) =
+        let ch =
+            Xml.create "channel"
+            |> Xml.append (Xml.createValue "title" channel.Title)
+            |> Xml.append (Xml.createValue "link" (string channel.Link))
+            |> Xml.append (Xml.createValueXCData "description" channel.Description)
+            |> Xml.appendOpt (channel.Language |> Option.map (fun l -> Xml.createValue "language" l))                         // opt
+            |> Xml.append (Xml.createValueNs Namespaces.itunes "author" channel.Author)
+            |> Xml.append (
+                Xml.createNs Namespaces.itunes "owner"
+                |> Xml.append (Xml.createValueNs Namespaces.itunes "name" channel.Owner.Name)
+                |> Xml.append (Xml.createValueNs Namespaces.itunes "email" channel.Owner.Email)
+            )
+            |> Xml.append (Xml.createNs Namespaces.itunes "image" |> Xml.attribute "href" (string channel.Image))
+            |> Xml.append (Xml.createValueNs Namespaces.itunes "explicit" (channel.Explicit.ToString().ToLower()))  // opt
+            |> Xml.appendOpt (channel.Category |> Option.map (fun x -> Xml.createNs Namespaces.itunes "category" |> Xml.attribute "text" x))          // opt
+            |> Xml.append (Xml.createValueNs Namespaces.itunes "type" "episodic")  // opt
+            |> Xml.appendOpt (channel.Restrictions |> tryGetRestrictions) // opt
+            
+        xs |> List.fold (fun acc item -> acc |> Xml.append (getItem item)) ch
+        
 
     let getDoc (ch:Channel) (xs:Item list) =
-        let doc =
-            getDocument()
-            |> Xml.appendDoc (getRoot())
-            |> Xml.append (getChannel ch)
-        xs |> List.fold (fun acc item -> acc |> Xml.append (getItem item)) doc
+        getDocument()
+        |> Xml.appendDoc (getRoot())
+        |> Xml.append (getChannel ch xs)
 
     let toString (doc:XElement) =
         use memory = new System.IO.MemoryStream()
