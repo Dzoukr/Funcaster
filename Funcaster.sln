@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Funcaster", "src\Funcaster\Funcaster.fsproj", "{1ECEB37A-169A-4E7B-B13B-035B7C886E36}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{D0FF7A9C-A6A9-4770-B9BA-E0201DAD04D0}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Build", "Build.fsproj", "{FB01406A-F0AF-4E5A-80E0-5931F5F00EA8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +16,12 @@ Global
 		{1ECEB37A-169A-4E7B-B13B-035B7C886E36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1ECEB37A-169A-4E7B-B13B-035B7C886E36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1ECEB37A-169A-4E7B-B13B-035B7C886E36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB01406A-F0AF-4E5A-80E0-5931F5F00EA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB01406A-F0AF-4E5A-80E0-5931F5F00EA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB01406A-F0AF-4E5A-80E0-5931F5F00EA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB01406A-F0AF-4E5A-80E0-5931F5F00EA8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FB01406A-F0AF-4E5A-80E0-5931F5F00EA8} = {D0FF7A9C-A6A9-4770-B9BA-E0201DAD04D0}
 	EndGlobalSection
 EndGlobal
