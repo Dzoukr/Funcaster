@@ -2,11 +2,6 @@
 
 open System
 
-type Episode = {
-    Season : int
-    Episode : int
-}
-
 type Enclosure = {
     Url : Uri
     Type : string
@@ -33,7 +28,8 @@ module EpisodeType =
     
 type Item = {
     Guid : string
-    Episode : Episode option
+    Season : int option
+    Episode : int option
     Enclosure : Enclosure
     Publish : DateTimeOffset
     Title : string

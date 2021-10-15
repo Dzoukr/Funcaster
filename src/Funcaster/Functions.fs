@@ -22,6 +22,7 @@ module Stubs =
     let getItemStub guid url length contentType : Item =
         {
             Guid = guid
+            Season = None
             Episode = None
             Enclosure = { Url = url; Type = contentType; Length = length }
             Publish = DateTimeOffset.MaxValue
@@ -116,7 +117,7 @@ type Functions(log:ILogger<Functions>, blobClient:BlobServiceClient) =
         ()
 
     [<Function("RssFeed")>]
-    member _.RssFeed ([<HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "rss")>] req: HttpRequestData, ctx: FunctionContext) =
+    member _.RssFeed ([<HttpTrigger(AuthorizationLevel.Anonymous, "get", "head", Route = "rss")>] req: HttpRequestData, ctx: FunctionContext) =
         let client = blobClient.GetBlobContainerClient(Paths.Root)
         let channel = client.GetBlobClient(Paths.Metadata) |> Helpers.downloadDeserialized<YamlChannel> |> YamlChannel.ToChannel
         let items =

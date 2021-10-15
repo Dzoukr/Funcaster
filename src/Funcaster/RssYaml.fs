@@ -80,23 +80,6 @@ type YamlChannel() =
             Restrictions = y.Restrictions |> fromNullableToList
         }
 
-[<AllowNullLiteral>]
-type YamlEpisode() =
-    member val Season = 0 with get, set
-    member val Episode = 0 with get, set
-    
-    static member OfEpisode (e:Episode) =
-        let y = YamlEpisode()
-        y.Season <- e.Season
-        y.Episode <- e.Episode
-        y
-    
-    static member ToEpisode (y:YamlEpisode) =
-        {
-            Season = y.Season
-            Episode = y.Episode
-        }
-
 type YamlEnclosure() =
     member val Url = "" with get, set
     member val Type = "" with get, set
@@ -118,7 +101,8 @@ type YamlEnclosure() =
 
 type YamlItem() =
     member val Guid = "" with get, set
-    member val Episode : YamlEpisode = null with get, set
+    member val Season : Nullable<int> = Nullable<int>() with get, set
+    member val Episode : Nullable<int> = Nullable<int>() with get, set
     member val Enclosure = YamlEnclosure() with get, set
     member val Publish = "" with get, set
     member val Title = "" with get, set
@@ -133,7 +117,8 @@ type YamlItem() =
     static member OfItem (e:Item) =
         let y = YamlItem()
         y.Guid <- e.Guid
-        y.Episode <- e.Episode |> Option.map YamlEpisode.OfEpisode |> Option.toObj
+        y.Season <- e.Season |> Option.toNullable
+        y.Episode <- e.Episode |> Option.toNullable
         y.Enclosure <- e.Enclosure |> YamlEnclosure.OfEnclosure
         y.Publish <- e.Publish.ToString("o")
         y.Title <- e.Title
@@ -149,7 +134,8 @@ type YamlItem() =
     static member ToItem (y:YamlItem) =
         {
             Guid = y.Guid
-            Episode = y.Episode |> Option.ofObj |> Option.map YamlEpisode.ToEpisode
+            Season = y.Season |> Option.ofNullable
+            Episode = y.Episode |> Option.ofNullable
             Enclosure = y.Enclosure |> YamlEnclosure.ToEnclosure
             Publish = DateTimeOffset.Parse y.Publish
             Title = y.Title

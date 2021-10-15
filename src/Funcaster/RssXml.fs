@@ -20,6 +20,7 @@ module RssXml =
 
     let private getRoot () =
         Xml.create "rss"
+        |> Xml.attribute "version" "2.0"
         |> Xml.attributeNs XNamespace.Xmlns "itunes" Namespaces.itunes
         |> Xml.attributeNs XNamespace.Xmlns "atom" Namespaces.atom
         |> Xml.attributeNs XNamespace.Xmlns "media" Namespaces.media
@@ -41,12 +42,14 @@ module RssXml =
         match keys with
         | [] -> None
         | list -> Xml.createValueNs Namespaces.itunes "keywords" (list |> String.concat ",") |> Some
-
-    let private getItem (item:Item) =
+    
+    let private getImageTag i = Xml.createNs Namespaces.itunes "image" |> Xml.attribute "href" (string i)
+    
+    let private getItem (channel:Channel) (item:Item) =
         Xml.create "item"
         |> Xml.append (Xml.createValue "guid" item.Guid |> Xml.attribute "isPermalink" "false")
-        |> Xml.appendOpt (item.Episode |> Option.map (fun e -> Xml.createValueNs Namespaces.itunes "episode" $"{e.Episode}"))
-        |> Xml.appendOpt (item.Episode |> Option.map (fun e -> Xml.createValueNs Namespaces.itunes "season" $"{e.Season}"))
+        |> Xml.appendOpt (item.Season |> Option.map (fun e -> Xml.createValueNs Namespaces.itunes "season" $"{e}"))
+        |> Xml.appendOpt (item.Episode |> Option.map (fun s -> Xml.createValueNs Namespaces.itunes "episode" $"{s}"))
         |> Xml.append (
             Xml.create "enclosure"
             |> Xml.attribute "url" (string item.Enclosure.Url)
@@ -59,7 +62,7 @@ module RssXml =
         |> Xml.appendOpt (item.Restrictions |> tryGetRestrictions) // opt
         |> Xml.append (Xml.createValueNs Namespaces.itunes "duration" (string item.Duration))
         |> Xml.append (Xml.createValueNs Namespaces.itunes "explicit" (item.Explicit.ToString().ToLower())) // opt
-        |> Xml.appendOpt (item.Image |> Option.map (fun i -> Xml.createNs Namespaces.itunes "image" |> Xml.attribute "href" (string i)))
+        |> Xml.append (item.Image |> Option.defaultValue channel.Image |> getImageTag)
         |> Xml.appendOpt (item.Keywords |> tryGetKeywords) // opt
         |> Xml.append (Xml.createValueNs Namespaces.itunes "episodeType" (item.EpisodeType |> EpisodeType.value)) // opt
 
@@ -76,13 +79,13 @@ module RssXml =
                 |> Xml.append (Xml.createValueNs Namespaces.itunes "name" channel.Owner.Name)
                 |> Xml.append (Xml.createValueNs Namespaces.itunes "email" channel.Owner.Email)
             )
-            |> Xml.append (Xml.createNs Namespaces.itunes "image" |> Xml.attribute "href" (string channel.Image))
+            |> Xml.append (channel.Image |> getImageTag)
             |> Xml.append (Xml.createValueNs Namespaces.itunes "explicit" (channel.Explicit.ToString().ToLower()))  // opt
             |> Xml.appendOpt (channel.Category |> Option.map (fun x -> Xml.createNs Namespaces.itunes "category" |> Xml.attribute "text" x))          // opt
             |> Xml.append (Xml.createValueNs Namespaces.itunes "type" "episodic")  // opt
             |> Xml.appendOpt (channel.Restrictions |> tryGetRestrictions) // opt
             
-        xs |> List.fold (fun acc item -> acc |> Xml.append (getItem item)) ch
+        xs |> List.fold (fun acc item -> acc |> Xml.append (getItem channel item)) ch
         
 
     let getDoc (ch:Channel) (xs:Item list) =
