@@ -65,7 +65,7 @@ Create a new Function app with any name you would like to use, select the same r
 
 #### 2️⃣ Setup connection string, runtime, and version
 
-At this date (17. 10. 2021), ⚡Funcaster is built on `.NET5` using `dotnet-isolated` as worker runtime, which is equivalent to `~3` extension version. We need to set this properly in configuration + add the connection string to the prepared Storage Account.
+⚡Funcaster is built on `.NET6` using `dotnet-isolated` as worker runtime, which is equivalent to `~4` extension version. We need to check this is properly configured in configuration + add the connection string to the prepared Storage Account.
 
 ![](docs/func_02.gif)
 

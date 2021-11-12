@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
-        <AzureFunctionsVersion>v3</AzureFunctionsVersion>
+        <TargetFramework>net6.0</TargetFramework>
+        <AzureFunctionsVersion>v4</AzureFunctionsVersion>
         <OutputType>Exe</OutputType>
         <_FunctionsSkipCleanOutput>true</_FunctionsSkipCleanOutput>
     </PropertyGroup>
