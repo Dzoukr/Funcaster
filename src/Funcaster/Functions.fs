@@ -34,7 +34,7 @@ type Functions(log:ILogger<Functions>, podcast:PodcastTable, episodes:EpisodesTa
             let! channelOpt = getPodcast podcast ()
             let channel = channelOpt |> Option.defaultValue Stubs.getEmptyChannel
             let! allItems = getEpisodes episodes ()
-            let items = allItems |> List.filter (fun x -> x.Publish <= DateTimeOffset.UtcNow)
+            let items = allItems |> List.filter (fun x -> x.Publish <= DateTimeOffset.UtcNow) |> List.sortByDescending (fun x -> x.Publish)
             let res = req.CreateResponse(HttpStatusCode.OK)
             res.Headers.Add("Content-Type", "application/rss+xml; charset=utf-8");
             RssXml.getDoc channel items |> RssXml.toString |> res.WriteString
