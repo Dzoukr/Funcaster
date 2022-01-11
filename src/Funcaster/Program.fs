@@ -1,17 +1,15 @@
 module Funcaster.Program
 
-open System
-open System.Threading.Tasks
-open Azure.Storage.Blobs
-open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Hosting
-open Microsoft.Azure.Functions.Worker.Configuration
 open Microsoft.Extensions.DependencyInjection
+open Funcaster.Storage
 
 let configureServices (ctx:HostBuilderContext) (svcs:IServiceCollection) =
     let connString = ctx.Configuration.["PodcastStorage"]
-    let blobClient = BlobServiceClient(connString)
-    svcs.AddSingleton<BlobServiceClient>(blobClient) |> ignore
+    let episodes = EpisodesTable.create connString
+    let podcast = PodcastTable.create connString
+    svcs.AddSingleton<EpisodesTable>(episodes) |> ignore
+    svcs.AddSingleton<PodcastTable>(podcast) |> ignore
     ()
 
 [<EntryPoint>]
