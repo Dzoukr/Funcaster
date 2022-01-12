@@ -4,7 +4,7 @@
 <img src="logo.png" width="150px"/>
 </p>
 
-⚡ Serverless .NET solution for hosting your 🔊 podcasts with (nearly) zero costs using Azure Functions and Azure Storage Account.
+⚡ Serverless .NET solution for hosting your 🔊 podcasts with (nearly) zero costs using Azure Functions and Azure Storage Account. Now with integration with 💻 [FuncasterStudio](https://github.com/Dzoukr/FuncasterStudio)!
 
 
 ## Supported platforms
@@ -41,15 +41,10 @@ Once logged in Azure Portal, create a new Storage Account a wait for deployment 
 
 ![](docs/account_01.gif)
 
-#### 2️⃣ Create root container
 
-All your podcast data need to be stored somewhere. This is why we create a new blob container called `podcast` with _Blob permissions (anonymous read access for blobs only)._ This means that data in this folder can be accessed publicly (we need that).
+#### 2️⃣ Copy access key
 
-![](docs/account_02.gif)
-
-#### 3️⃣ Copy access key
-
-To connect serverless part of ⚡Funcaster with newly created Storage Account, you need to copy a connection string.
+To connect serverless part of ⚡Funcaster with newly created Storage Account, you need to copy a connection string. Also remember this key for using 💻 [FuncasterStudio](https://github.com/Dzoukr/FuncasterStudio) later.
 
 ![](docs/account_03.gif)
 
@@ -77,31 +72,18 @@ Ok, let's deploy our ZIP file! There are many ways (CI solutions like GitHub Act
 
 Great! Your solution is _almost_ ready! Now it's time to add some podcast content, can we?
 
-## Using ⚡Funcaster
+## Using ⚡Funcaster with 💻 [FuncasterStudio](https://github.com/Dzoukr/FuncasterStudio)
 
-Your podcasting solution is ready for serving files stored on blob storage. Let's start using it!!
+Your podcasting solution is ready for serving files stored on blob storage. Let's start using it!! This the time when 💻 [FuncasterStudio](https://github.com/Dzoukr/FuncasterStudio) steps in as a great solution.
 
-[](docs/data_01.gif)
+Just pull it as a Docker image from hub and run it locally using connection string to newly created storage acccount.
 
-### Uploading new episodes
+```cli
+> docker run -p 1234:80 -e PodcastStorage="<CONNECTION_STRING>" dzoukr/funcasterstudio
+```
 
-To add new episodes, you just simply upload files into the `episodes` (virtual) container in your `podcast` container:
+Navigate to `http://localhost:1234` and start uploading episodes, podcast logo, and other stuff using 💻 [FuncasterStudio](https://github.com/Dzoukr/FuncasterStudio).
 
-![](docs/data_01.gif)
-
-### Publishing episodes
-
-After few seconds, ⚡Funcaster will find the newly uploaded file and create a basic metadata `yaml` file named the same as the original file. You can switch to a different view to see what's inside.
-
-![](docs/data_02.gif)
-
-You can see that ⚡Funcaster sniffed the newly uploaded file and already prefilled basic information like `url`, `type`, or `length` for you. You need to give it some proper title (we don't wanna call our episodes as the empty string), description, and the duration of the episode in `HH:MM:SS` format. After updating those, just click on the Save button.
-
-![](docs/data_03.gif)
-
-Great! We are nearly done! The last step is to set up our podcast metadata. That's why we have automatically created `podcast.yaml` file on the root level. Let's fill it, can we?
-
-![](docs/data_04.gif)
 
 IT'S DONE! 🥳🎆🎊 Let's see how our RSS feed looks like. Navigate to https://<NAME_OF_YOUR_FUNCTION_APP>.azurewebsites.net/rss and behold!
 
@@ -120,16 +102,3 @@ It's up to you. Soundcloud offers great social features like likes, a built-in w
 ### What if I need an embedded player on my site?
 
 Spotify and Apple offer an easy way of creating embedded players directly from the application or [marketing tools](https://tools.applemediaservices.com/). Or just use `<audio>` HTML5 tag.
-
-### What's the `_index.yaml` file for?
-
-This file is automatically created and updated by ⚡Funcaster to be aware of all the episodes you have without going through the whole blob storage file system tree and scanning. You shouldn't care about this file until you need to...
-
-### What if I need to delete an episode?
-
-Thanks to fact that `BlobTrigger` is not fired when something is removed, you need to do some manual work. First step is to remove `YourFileToBeDeleted.mp3` and `YourFileToBeDeleted.yaml`. The second step is to go into `_index.yaml` and delete it from the index.
-
-### Can I have episodes stored in a deeper structure?
-
-Sure! The only required thing is to have them stored in `episodes` folder - this is where ⚡Funcaster is sniffing around. But if you upload your file directly in this folder or you create `episodes\some\completely\weird\logic\for\storing\my\files` it's your call.
-
