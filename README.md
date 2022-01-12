@@ -42,9 +42,9 @@ Once logged in Azure Portal, create a new Storage Account a wait for deployment 
 ![](docs/account_01.gif)
 
 
-#### 2️⃣ Copy access key
+#### 2️⃣ Copy connection string
 
-To connect serverless part of ⚡Funcaster with newly created Storage Account, you need to copy a connection string. Also remember this key for using 💻 [FuncasterStudio](https://github.com/Dzoukr/FuncasterStudio) later.
+To connect serverless part of ⚡Funcaster with newly created Storage Account, you need to copy a connection string. Also remember it for using 💻 [FuncasterStudio](https://github.com/Dzoukr/FuncasterStudio) later.
 
 ![](docs/account_03.gif)
 
@@ -84,6 +84,7 @@ Just pull it as a Docker image from hub and run it locally using connection stri
 
 Navigate to `http://localhost:1234` and start uploading episodes, podcast logo, and other stuff using 💻 [FuncasterStudio](https://github.com/Dzoukr/FuncasterStudio).
 
+![](docs/funcasterstudio.gif)
 
 IT'S DONE! 🥳🎆🎊 Let's see how our RSS feed looks like. Navigate to https://<NAME_OF_YOUR_FUNCTION_APP>.azurewebsites.net/rss and behold!
 
