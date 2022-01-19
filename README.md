@@ -84,7 +84,7 @@ Just pull it as a Docker image from hub and run it locally using connection stri
 
 Navigate to `http://localhost:1234` and start uploading episodes, podcast logo, and other stuff using 💻 [FuncasterStudio](https://github.com/Dzoukr/FuncasterStudio).
 
-![](docs/funcasterstudio.gif)
+![](https://raw.githubusercontent.com/Dzoukr/FuncasterStudio/master/docs/funcasterstudio.gif)
 
 IT'S DONE! 🥳🎆🎊 Let's see how our RSS feed looks like. Navigate to https://<NAME_OF_YOUR_FUNCTION_APP>.azurewebsites.net/rss and behold!
 
