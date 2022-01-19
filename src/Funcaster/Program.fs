@@ -6,10 +6,12 @@ open Funcaster.Storage
 
 let configureServices (ctx:HostBuilderContext) (svcs:IServiceCollection) =
     let connString = ctx.Configuration.["PodcastStorage"]
-    let episodes = EpisodesTable.create connString
-    let podcast = PodcastTable.create connString
+    let episodes = EpisodesTable.createSafe connString
+    let podcast = PodcastTable.createSafe connString
+    let cdnSetup = CdnSetupTable.createSafe connString
     svcs.AddSingleton<EpisodesTable>(episodes) |> ignore
     svcs.AddSingleton<PodcastTable>(podcast) |> ignore
+    svcs.AddSingleton<CdnSetupTable>(cdnSetup) |> ignore
     ()
 
 [<EntryPoint>]

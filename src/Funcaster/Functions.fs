@@ -3,6 +3,7 @@ namespace Funcaster.Functions
 open System
 open System.Net
 open Funcaster.Domain
+open Funcaster.DomainExtensions
 open Funcaster.RssXml
 open Funcaster.Storage
 open Microsoft.Azure.Functions.Worker
@@ -26,15 +27,31 @@ module Stubs =
             Restrictions = []
         }
 
-type Functions(log:ILogger<Functions>, podcast:PodcastTable, episodes:EpisodesTable) =
+type Functions(log:ILogger<Functions>, podcast:PodcastTable, episodes:EpisodesTable, cdn:CdnSetupTable) =
 
     [<Function("RssFeed")>]
     member _.RssFeed ([<HttpTrigger(AuthorizationLevel.Anonymous, "get", "head", Route = "rss")>] req: HttpRequestData, ctx: FunctionContext) =
         task {
+            // get CDN info
+            let! cdnSetupOpt = getCdnSetup cdn ()
+            let cdnSetup = cdnSetupOpt |> Option.defaultValue CdnSetup.none
+            
+            // get Channel
             let! channelOpt = getPodcast podcast ()
-            let channel = channelOpt |> Option.defaultValue Stubs.getEmptyChannel
+            let channel =
+                channelOpt
+                |> Option.defaultValue Stubs.getEmptyChannel
+                |> CdnSetup.rewriteChannel cdnSetup
+            
+            // get Episodes
             let! allItems = getEpisodes episodes ()
-            let items = allItems |> List.filter (fun x -> x.Publish <= DateTimeOffset.UtcNow) |> List.sortByDescending (fun x -> x.Publish)
+            let items =
+                allItems
+                |> List.filter (fun x -> x.Publish <= DateTimeOffset.UtcNow)
+                |> List.sortByDescending (fun x -> x.Publish)
+                |> List.map (CdnSetup.rewriteItem cdnSetup)
+            
+            // write response
             let res = req.CreateResponse(HttpStatusCode.OK)
             res.Headers.Add("Content-Type", "application/rss+xml; charset=utf-8");
             RssXml.getDoc channel items |> RssXml.toString |> res.WriteString

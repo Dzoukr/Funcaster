@@ -73,3 +73,11 @@ type Channel = {
     Type : ChannelType
     Restrictions : string list
 }
+
+type CdnSetup = {
+    IsEnabled : bool
+    CdnUrl : Uri
+}
+
+module CdnSetup =
+    let none = { IsEnabled = false; CdnUrl = Uri("https://www.example.com") }

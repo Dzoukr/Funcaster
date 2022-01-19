@@ -26,8 +26,10 @@ module private Helpers =
 type PodcastTable = PodcastTable of TableClient
 
 module PodcastTable =
-    let create (conn:string) =
-        TableClient(conn, "Podcast") |> PodcastTable
+    let createSafe (conn:string) =
+        let client = TableClient(conn, "Podcast")
+        let _ = client.CreateIfNotExists()
+        client |> PodcastTable
 
 module Channel =
     let toEntity (c:Channel) : TableEntity =
@@ -83,8 +85,10 @@ let upsertPodcast (PodcastTable podcastTable) (channel:Channel) =
 type EpisodesTable = EpisodesTable of TableClient
 
 module EpisodesTable =
-    let create (conn:string) =
-        TableClient(conn, "Episodes") |> EpisodesTable
+    let createSafe (conn:string) =
+        let client = TableClient(conn, "Episodes")
+        let _ = client.CreateIfNotExists()
+        client |> EpisodesTable
 
 module Item =
     let toPartialEnclosureEntity (guid:string) (c:Enclosure) : TableEntity =
@@ -168,5 +172,46 @@ let updateEnclosure (EpisodesTable episodesTable) (guid:string) (enc:Enclosure) 
     task {
         let entity = enc |> Item.toPartialEnclosureEntity (guid |> key)
         let! _ = episodesTable.UpsertEntityAsync(entity, TableUpdateMode.Merge)
+        return ()
+    }
+
+type CdnSetupTable = CdnSetupTable of TableClient
+
+module CdnSetupTable =
+    let createSafe (conn:string) =
+        let client = TableClient(conn, "CdnSetup")
+        let _ = client.CreateIfNotExists()
+        client |> CdnSetupTable
+
+module CdnSetup =
+    let toEntity (c:CdnSetup) : TableEntity =
+        let e = TableEntity()
+        e.PartitionKey <- "cdn"
+        e.RowKey <- "cdn"
+        e.["CdnUrl"] <- c.CdnUrl |> string
+        e.["IsEnabled"] <- c.IsEnabled
+        e
+
+    let fromEntity (e:TableEntity) : CdnSetup =
+        {
+            CdnUrl = e.GetString("CdnUrl") |> Uri
+            IsEnabled = e.GetBoolean("IsEnabled") |> Option.ofNullable |> Option.defaultValue false
+        }
+
+let getCdnSetup (CdnSetupTable cdnTable) () =
+    task {
+        return
+            tableQuery {
+                filter (pk "cdn" + rk "cdn")
+            }
+            |> cdnTable.Query<TableEntity>
+            |> Seq.tryHead
+            |> Option.map CdnSetup.fromEntity
+    }
+    
+let upsertCdnSetup (CdnSetupTable cdnTable) (cdnSetup:CdnSetup) =
+    task {
+        let entity = cdnSetup |> CdnSetup.toEntity
+        let! _ = cdnTable.UpsertEntityAsync(entity, TableUpdateMode.Merge)
         return ()
     }
